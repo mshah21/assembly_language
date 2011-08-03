@@ -1,0 +1,1140 @@
+00002000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.3.2
+Created On: 5/3/2010 9:32:57 AM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Program    : ECE 441 SPRING 2010 PROJECT
+00000000                             3  * Written by : MALAV SHAH
+00000000                             4  * Date       : 
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00002000                             7          ORG     $2000
+00002000                             8          
+00002000                             9                         * clear all data and address register
+00002000  4280                      10  BEGIN   CLR.L   D0
+00002002  4281                      11          CLR.L   D1
+00002004  4282                      12          CLR.L   D2
+00002006  4283                      13          CLR.L   D3
+00002008  4284                      14          CLR.L   D4
+0000200A  4285                      15          CLR.L   D5
+0000200C  4286                      16          CLR.L   D6
+0000200E  4287                      17          CLR.L   D7
+00002010  207C 00000000             18          MOVEA.L #$0,A0
+00002016  227C 00000000             19          MOVEA.L #$0,A1
+0000201C  247C 00000000             20          MOVEA.L #$0,A2
+00002022  267C 00000000             21          MOVEA.L #$0,A3
+00002028  287C 00000000             22          MOVEA.L #$0,A4
+0000202E  2A7C 00000000             23          MOVEA.L #$0,A5
+00002034  2C7C 00000000             24          MOVEA.L #$0,A6  
+0000203A                            25  
+0000203A  43F9 00001000             26          LEA CMDPROMPT,A1 * display CMDPROMPT ECE 441 PROJECT>
+00002040  103C 000E                 27          MOVE.B #14,D0
+00002044  4E4F                      28          TRAP #15
+00002046                            29  
+00002046  103C 0005                 30          MOVE.B #5,D0     * enter space after CMDPROMPT
+0000204A  4E4F                      31          TRAP #15
+0000204C  143C 0020                 32          MOVE.B #$20,D2   * check if space is entered or not 
+00002050  B242                      33          CMP  D2,D1
+00002052  6700 0010                 34          BEQ  IN          * if space entered , input command
+00002056  43F9 00001026             35  ERR2    LEA  ERROR2,A1   * else error : Command start with space 
+0000205C  103C 000E                 36          MOVE.B #14,D0
+00002060  4E4F                      37          TRAP #15
+00002062  609C                      38          BRA BEGIN       * CMDPROMPT again user 
+00002064                            39           
+00002064  43F9 0000108C             40  IN      LEA INPUT,A1    * input command
+0000206A  47F9 000010BE             41          LEA INPUTEND,A3
+00002070  103C 0002                 42          MOVE.B #2,D0
+00002074  4E4F                      43          TRAP #15
+00002076                            44           
+00002076  183C 0019                 45  CMLNT   MOVE.B #25,D4  * check if commnad lenght inluding commnadline is more than 25 char
+0000207A  B244                      46          CMP    D4,D1
+0000207C  6E00 0026                 47          BGT    ERR3
+00002080  2449                      48  ERR     MOVEA.L A1,A2   * copy inputbuffer address to A2
+00002082  0C12 0000                 49          CMPI.B #$00,(A2) * if byte at input buffer is 00 (no command entered)
+00002086  6700 00E4                 50          BEQ   ERR1     * dispaly error
+0000208A  4285                      51          CLR.L   D5
+0000208C                            52          
+0000208C                            53  ******* GET COMMAND FROM INPUT BUFFER ***********        
+0000208C  1A1A                      54  PLINE   MOVE.B  (A2)+,D5 ; move ascii code of command from input buffer to D5
+0000208E  0C12 0000                 55          CMPI.B  #NULL,(A2) ; is it equal to NULL
+00002092  6700 0020                 56          BEQ     ALLCMD  ; if equal go to label ALLCMD
+00002096  0C12 0020                 57          CMPI.B  #SPACE,(A2) ; if not comapre with SPACE
+0000209A  6700 0018                 58          BEQ     ALLCMD ; if equal go to label ALLCMD
+0000209E  E19D                      59          ROL.L   #8,D5 ; rotate D5.L to get ASCII code of next command
+000020A0  B7CA                      60          CMPA.L  A2,A3 ; if command address  greater than end of command address
+000020A2  6CE8                      61          BGE     PLINE ; back to PLINE to get next ASCII code of command
+000020A4                            62  
+000020A4                            63  
+000020A4  43F9 00001041             64  ERR3    LEA    ERROR3,A1 * Dispaly Error Message if command lenght is more tahn 25
+000020AA  103C 000E                 65          MOVE.B  #14,D0
+000020AE  4E4F                      66          TRAP  #15       
+000020B0  6000 FF4E                 67          BRA   BEGIN
+000020B4                            68           
+000020B4                            69           
+000020B4  0C85 48454C50             70  ALLCMD  CMPI.L  #HELPUPPERCASE,D5 ; Check if command is HELP
+000020BA  6700 00C0                 71          BEQ      HELP             ; jump to HELP subroutine
+000020BE  0C85 68656C70             72          CMPI.L  #helplowercase,D5 
+000020C4  6700 00B6                 73          BEQ     HELP
+000020C8  0C85 4D445359             74          CMPI.L  #MEMDISPLAY,D5    ; Check if command is MDSY
+000020CE  6700 0176                 75          BEQ     MDSY              ; jump to MDSY subroutine
+000020D2  0C85 6D647379             76          CMPI.L  #mdisplylower,D5
+000020D8  6700 016C                 77          BEQ     MDSY 
+000020DC  0C85 44454349             78          CMPI.L  #HEXDEC,D5       ; check if command is DECI
+000020E2  6700 0350                 79          BEQ     HDEC            ; jump to HDEC subroutine
+000020E6  0C85 64656369             80          CMPI.L  #hexdeclower,D5
+000020EC  6700 0346                 81          BEQ     HDEC
+000020F0  0C85 534F5254             82          CMPI.L  #SORT,D5          ; check if it is SORT 
+000020F6  6700 048C                 83          BEQ     SORTNUMBER
+000020FA  0C85 736F7274             84          CMPI.L  #sortlower,D5
+00002100  6700 0482                 85          BEQ     SORTNUMBER
+00002104  0C85 46494C4C             86          CMPI.L  #BFILL,D5         ; check if it is BFILL 
+0000210A  6700 0416                 87          BEQ     BFIL
+0000210E  0C85 66696C6C             88          CMPI.L  #bfilllower,D5
+00002114  6700 040C                 89          BEQ     BFIL
+00002118  0C85 4D434847             90          CMPI.L  #MEMCHAGE,D5      ; check if it is MEMCHANGE
+0000211E  6700 052A                 91          BEQ     MEMORYCHG
+00002122  0C85 6D636867             92          CMPI.L  #changelower,D5
+00002128  6700 0520                 93          BEQ     MEMORYCHG
+0000212C  0C85 4D4F5645             94          CMPI.L  #BMOVE,D5        ; checj if it is MOVE
+00002132  6700 03BC                 95          BEQ     MOVE
+00002136  0C85 6D6F7665             96          CMPI.L  #movelower,D5
+0000213C  6700 03B2                 97          BEQ     MOVE
+00002140  0C85 51554954             98          CMPI.L  #QUITPROG,D5    ; check if it QUITPROG
+00002146  6700 00F8                 99          BEQ     EXIT
+0000214A  0C85 71756974            100          CMPI.L  #quitlowercase,D5
+00002150  6700 00EE                101          BEQ     EXIT
+00002154  0C85 474F544F            102          CMPI.L  #GOCMD,D5       ; check if it is GOCMD
+0000215A  6700 0142                103          BEQ     GOTO
+0000215E  0C85 676F746F            104          CMPI.L  #golower,D5
+00002164  6700 0138                105          BEQ     GOTO
+00002168  6000 0002                106          BRA ERR1           ; if not match any command error1
+0000216C                           107           
+0000216C                           108           
+0000216C                           109           
+0000216C                           110  
+0000216C  43F9 00001011            111  ERR1     LEA   ERROR1,A1
+00002172  103C 000E                112           MOVE.B #14,D0
+00002176  4E4F                     113           TRAP #15
+00002178  6000 FE86                114           BRA  BEGIN    
+0000217C                           115  
+0000217C                           116  ************* HELP SUBROUTINE ************
+0000217C                           117  
+0000217C  43F9 000010C9            118  HELP    LEA   CLF,A1
+00002182  103C 000E                119          MOVE.B   #14,D0
+00002186  4E4F                     120          TRAP     #15
+00002188                           121          
+00002188  43F9 00001127            122          LEA     HELPALL,A1
+0000218E  103C 000E                123          MOVE.B  #14,D0
+00002192  4E4F                     124          TRAP    #15 
+00002194                           125          
+00002194  43F9 000010CC            126          LEA     NONECASE,A1
+0000219A  103C 000E                127          MOVE.B  #14,D0
+0000219E  4E4F                     128          TRAP    #15
+000021A0                           129          
+000021A0  43F9 000010F2            130          LEA     CMDLIST1,A1
+000021A6  103C 000E                131          MOVE.B  #14,D0
+000021AA  4E4F                     132          TRAP    #15
+000021AC                           133          
+000021AC  43F9 00001109            134          LEA     CMDLIST2,A1
+000021B2  103C 000E                135          MOVE.B  #14,D0
+000021B6  4E4F                     136          TRAP    #15 
+000021B8                           137          
+000021B8  43F9 00001144            138          LEA     MDISPLAY,A1
+000021BE  103C 000E                139          MOVE.B  #14,D0
+000021C2  4E4F                     140          TRAP    #15
+000021C4                           141  
+000021C4  43F9 00001177            142          LEA     HEXTODEC,A1
+000021CA  103C 000E                143          MOVE.B  #14,D0
+000021CE  4E4F                     144          TRAP    #15
+000021D0                           145  
+000021D0  43F9 000011A3            146          LEA     SORT1,A1
+000021D6  103C 000E                147          MOVE.B  #14,D0
+000021DA  4E4F                     148          TRAP    #15
+000021DC                           149  
+000021DC  43F9 000011DD            150          LEA     SORT2,A1
+000021E2  103C 000E                151          MOVE.B  #14,D0
+000021E6  4E4F                     152          TRAP    #15
+000021E8                           153                                  
+000021E8  43F9 0000121F            154          LEA     CHANGE,A1
+000021EE  103C 000E                155          MOVE.B  #14,D0
+000021F2  4E4F                     156          TRAP    #15
+000021F4                           157  
+000021F4  43F9 00001251            158          LEA     CHANGE1,A1
+000021FA  103C 000E                159          MOVE.B  #14,D0
+000021FE  4E4F                     160          TRAP    #15
+00002200                           161  
+00002200  43F9 00001293            162          LEA     CHANGE2,A1
+00002206  103C 000E                163          MOVE.B  #14,D0
+0000220A  4E4F                     164          TRAP    #15
+0000220C                           165  
+0000220C                           166  
+0000220C  43F9 000012AC            167          LEA     BLOCKFILL,A1
+00002212  103C 000E                168          MOVE.B  #14,D0
+00002216  4E4F                     169          TRAP    #15
+00002218                           170  
+00002218  43F9 000012E8            171          LEA     QUIT,A1
+0000221E  103C 000E                172          MOVE.B  #14,D0
+00002222  4E4F                     173          TRAP    #15
+00002224                           174  
+00002224  43F9 00001302            175          LEA     GOCOMMAND,A1
+0000222A  103C 000E                176          MOVE.B  #14,D0
+0000222E  4E4F                     177          TRAP    #15
+00002230                           178  
+00002230  43F9 00001331            179          LEA     BLOCKMOVE,A1
+00002236  103C 000E                180          MOVE.B  #14,D0
+0000223A  4E4F                     181          TRAP    #15
+0000223C                           182  
+0000223C                           183          
+0000223C  6000 FDC2                184          BRA     BEGIN   
+00002240                           185          
+00002240                           186  *********** EXIT PROGRAM ***********
+00002240  103C 0009                187  EXIT    MOVE.B #9,D0
+00002244  4E4F                     188          TRAP #15        
+00002246                           189          
+00002246                           190  ************* Memory Display ****************
+00002246                           191  
+00002246                           192          
+00002246  6100 0062                193  MDSY    BSR     GETADDRESS
+0000224A  2840                     194          MOVE.L  D0,A4 
+0000224C  304C                     195          MOVE.W  A4,A0
+0000224E  6100 03DC                196          BSR     ADDRESSCOMPARE
+00002252  6100 0056                197          BSR     GETADDRESS
+00002256  2A40                     198          MOVE.L  D0,A5 
+00002258  304D                     199          MOVE.W  A5,A0 
+0000225A  6100 03D0                200          BSR     ADDRESSCOMPARE 
+0000225E  200C                     201  DIS     MOVE.L  A4,D0 
+00002260                           202  
+00002260                           203          
+00002260  47F9 00001404            204          LEA     BMDIS,A3 
+00002266  6100 01A8                205          BSR     PNT4HX
+0000226A                           206          
+0000226A  1014                     207          MOVE.B  (A4),D0  
+0000226C  47F9 0000140A            208          LEA     BMDA,A3
+00002272  6100 01A4                209          BSR     PNT2HX
+00002276                           210          
+00002276  43F9 00001404            211           LEA BMDIS,A1
+0000227C  103C 000E                212           MOVE.B #14,D0
+00002280  4E4F                     213           TRAP #15
+00002282                           214           
+00002282  43F9 0000140A            215          LEA     BMDA,A1
+00002288  47F9 0000140C            216          LEA     BEMDA,A3
+0000228E  103C 0012                217          MOVE.B  #18,D0
+00002292  4E4F                     218          TRAP    #15
+00002294                           219          
+00002294  528C                     220          ADDA.L  #1,A4
+00002296  BBCC                     221          CMPA.L  A4,A5
+00002298  6CC4                     222          BGE     DIS
+0000229A                           223  
+0000229A  6000 FD64                224          BRA     BEGIN
+0000229E                           225          
+0000229E                           226  
+0000229E                           227  ************ GO SUBROUTINE ***********
+0000229E  6100 000A                228  GOTO    BSR     GETADDRESS
+000022A2  2040                     229          MOVEA.L D0,A0
+000022A4  6100 0386                230          BSR     ADDRESSCOMPARE
+000022A8  4ED0                     231          JMP     (A0)
+000022AA                           232          
+000022AA                           233          
+000022AA                           234  ************ MEMORY ADDRESS SUBROUTINE************              
+000022AA                           235         
+000022AA  4284                     236  GETADDRESS      CLR.L   D4
+000022AC  0C1A 0020                237                  CMPI.B  #SPACE,(A2)+
+000022B0  0C1A 0024                238                  CMPI.B  #DOLLARSIGN,(A2)+
+000022B4  6700 0008                239                  BEQ     CONT4
+000022B8  6000 FEB2                240                  BRA     ERR1    
+000022BC                           241                  
+000022BC  4284                     242                  CLR.L   D4
+000022BE  181A                     243  CONT4           MOVE.B  (A2)+,D4
+000022C0  0C12 0000                244                  CMPI.B  #NULL,(A2)
+000022C4  6700 0018                245                  BEQ     CHG4
+000022C8  0C12 0020                246                  CMPI.B  #SPACE,(A2)
+000022CC  6700 0010                247                  BEQ     CHG4
+000022D0  0C12 003B                248                  CMPI.B  #$3B,(A2)
+000022D4  6700 0008                249                  BEQ     CHG4    
+000022D8  E19C                     250                  ROL.L   #8,D4
+000022DA  B7CA                     251                  CMPA.L  A2,A3
+000022DC  6CE0                     252                  BGE     CONT4
+000022DE                           253          
+000022DE  4280                     254  CHG4            CLR.L   D0
+000022E0  4281                     255                  CLR.L   D1
+000022E2  4282                     256                  CLR.L   D2
+000022E4  2204                     257                  MOVE.L  D4,D1
+000022E6  303C 0003                258                  MOVE.W  #3,D0
+000022EA  E199                     259  LOOP4           ROL.L   #8,D1
+000022EC  6100 000A                260                  BSR     ASCIITOHEX
+000022F0  51C8 FFF8                261                  DBF     D0,LOOP4
+000022F4  2002                     262                  MOVE.L D2,D0
+000022F6                           263          
+000022F6  4E75                     264                  RTS
+000022F8                           265  
+000022F8                           266  ********** ASCII TABLE **********
+000022F8                           267  
+000022F8                           268  
+000022F8  0C01 0000                269  ASCIITOHEX CMPI.B #NULL,D1
+000022FC  6700 0082                270          BEQ    NOTZERO
+00002300  0C01 0030                271          CMPI.B #AZERO,D1
+00002304  6700 007C                272          BEQ    ZERO
+00002308  0C01 0031                273          CMPI.B #AONE,D1
+0000230C  6700 007E                274          BEQ    ONE
+00002310  0C01 0032                275          CMPI.B #ATWO,D1
+00002314  6700 007C                276          BEQ    TWO
+00002318  0C01 0033                277          CMPI.B #ATHREE,D1
+0000231C  6700 007A                278          BEQ    THRE
+00002320  0C01 0034                279          CMPI.B #AFOUR,D1
+00002324  6700 0078                280          BEQ    FOUR
+00002328  0C01 0035                281          CMPI.B #AFIVE,D1
+0000232C  6700 0076                282          BEQ    FIVE
+00002330  0C01 0036                283          CMPI.B #ASIX,D1
+00002334  6700 0074                284          BEQ    SIX
+00002338  0C01 0037                285          CMPI.B #ASEVEN,D1
+0000233C  6700 0072                286          BEQ    SEV
+00002340  0C01 0038                287          CMPI.B #AEIGHT,D1
+00002344  6700 0070                288          BEQ    OCT
+00002348  0C01 0039                289          CMPI.B #ANINE,D1
+0000234C  6700 006E                290          BEQ    NINE
+00002350  0C01 0041                291          CMPI.B #ATEN,D1
+00002354  6700 0070                292          BEQ    TEN
+00002358  0C01 0042                293          CMPI.B #AELEVEN,D1
+0000235C  6700 0072                294          BEQ    ELE
+00002360  0C01 0043                295          CMPI.B #ATWELVE,D1
+00002364  6700 0074                296          BEQ    TEW
+00002368  0C01 0044                297          CMPI.B #ATHIRTEEN,D1
+0000236C  6700 0076                298          BEQ    THRT
+00002370  0C01 0045                299          CMPI.B #AFOURTEEN,D1
+00002374  6700 0078                300          BEQ    FORT
+00002378  0C01 0046                301          CMPI.B #AFIFTEEN,D1
+0000237C  6700 007A                302          BEQ    FIVT
+00002380                           303  
+00002380  4E75                     304  NOTZERO RTS
+00002382                           305  
+00002382  E99A                     306  ZERO    ROL.L     #4,D2
+00002384  0682 00000000            307          ADDI.L    #$00,D2
+0000238A  4E75                     308          RTS
+0000238C  E99A                     309  ONE     ROL.L     #4,D2
+0000238E  5282                     310          ADDI.L    #$01,D2
+00002390  4E75                     311          RTS
+00002392  E99A                     312  TWO     ROL.L     #4,D2
+00002394  5482                     313          ADDI.L    #$02,D2
+00002396  4E75                     314          RTS
+00002398  E99A                     315  THRE    ROL.L     #4,D2   
+0000239A  5682                     316          ADDI.L    #$03,D2
+0000239C  4E75                     317          RTS
+0000239E  E99A                     318  FOUR    ROL.L     #4,D2   
+000023A0  5882                     319          ADDI.L    #$04,D2
+000023A2  4E75                     320          RTS
+000023A4  E99A                     321  FIVE    ROL.L     #4,D2
+000023A6  5A82                     322          ADDI.L    #$05,D2
+000023A8  4E75                     323          RTS
+000023AA  E99A                     324  SIX     ROL.L     #4,D2
+000023AC  5C82                     325          ADDI.L    #$06,D2
+000023AE  4E75                     326          RTS
+000023B0  E99A                     327  SEV     ROL.L     #4,D2
+000023B2  5E82                     328          ADDI.L    #$07,D2
+000023B4  4E75                     329          RTS
+000023B6  E99A                     330  OCT     ROL.L     #4,D2
+000023B8  5082                     331          ADDI.L    #$08,D2
+000023BA  4E75                     332          RTS
+000023BC  E99A                     333  NINE    ROL.L     #4,D2
+000023BE  0682 00000009            334          ADDI.L    #$09,D2
+000023C4  4E75                     335          RTS
+000023C6  E99A                     336  TEN     ROL.L     #4,D2
+000023C8  0682 0000000A            337          ADDI.L    #$A,D2
+000023CE  4E75                     338          RTS
+000023D0  E99A                     339  ELE     ROL.L     #4,D2
+000023D2  0682 0000000B            340          ADDI.L    #$B,D2
+000023D8  4E75                     341          RTS
+000023DA  E99A                     342  TEW     ROL.L     #4,D2
+000023DC  0682 0000000C            343          ADDI.L    #$C,D2
+000023E2  4E75                     344          RTS
+000023E4  E99A                     345  THRT    ROL.L     #4,D2
+000023E6  0682 0000000D            346          ADDI.L    #$D,D2
+000023EC  4E75                     347          RTS
+000023EE  E99A                     348  FORT    ROL.L     #4,D2
+000023F0  0682 0000000E            349          ADDI.L    #$E,D2
+000023F6  4E75                     350          RTS
+000023F8  E99A                     351  FIVT    ROL.L     #4,D2
+000023FA  0682 0000000F            352          ADDI.L    #$F,D2
+00002400  4E75                     353          RTS
+00002402                           354          
+00002402                           355          
+00002402                           356   *********************************
+00002402                           357  *
+00002402                           358  *  PRINT HEX ROUTINES
+00002402                           359  *
+00002402                           360  *
+00002402                           361  **********************************
+00002402                           362  *
+00002402  4840                     363  PNT8HX   SWAP    D0             ;FLIP REG HALVES
+00002404  610A                     364           BSR.S   PNT4HX         ;DO TOP WORD
+00002406  4840                     365           SWAP    D0             ;NOW DO LOWER WORD
+00002408  6006                     366           BRA.S   PNT4HX
+0000240A                           367  
+0000240A  4840                     368  PNT6HX   SWAP    D0             ;FLIP REGISTER HALVES
+0000240C  610A                     369           BSR.S   PNT2HX
+0000240E  4840                     370           SWAP    D0             ;FLIP BACK REG HALVES
+00002410                           371  
+00002410  3200                     372  PNT4HX   MOVE.W  D0,D1          ;SAVE IN TEMP
+00002412  E058                     373           ROR.W   #8,D0          ;GET BITS 15-8 INTO LOWER BYTE
+00002414  6102                     374           BSR.S   PNT2HX         ;PRINT IT
+00002416  3001                     375           MOVE.W  D1,D0          ;PULL IT BACK
+00002418                           376  
+00002418  3400                     377  PNT2HX   MOVE.W  D0,D2          ;SAVE IN TEMP REG
+0000241A  E850                     378           ROXR.W  #4,D0          ;FORM UPPER NIBBLE
+0000241C  6102                     379           BSR.S   PUTHEX         ;PUT ASCII INTO PRINT BUFFER
+0000241E  3002                     380           MOVE.W  D2,D0          ;GET BACK FROM TEMP
+00002420                           381  
+00002420                           382  
+00002420  0200 000F                383  PUTHEX   ANDI.B  #$0F,D0        ;SAVE LOWER NIBBLE
+00002424  0000 0030                384           ORI.B   #$30,D0        ;CONVERT TO ASCII
+00002428  0C00 0039                385           CMPI.B  #$39,D0        ;SEE IF IT IS>9
+0000242C  6F02                     386           BLE.S   SAVHEX
+0000242E  5E40                     387           ADD     #7,D0          ;ADD TO MAKE 10=>A
+00002430  16C0                     388  SAVHEX   MOVE.B  D0,(A3)+   * CHANGE    ;PUT IT IN PRINT BUFFER
+00002432  4E75                     389           RTS
+00002434                           390           
+00002434                           391           
+00002434                           392           
+00002434                           393  *********HEXTODEC SUBROUTINE********
+00002434  0C1A 0020                394  HDEC    CMPI.B  #$20,(A2)+
+00002438  0C1A 0024                395          CMPI.B  #DOLLARSIGN,(A2)+
+0000243C  6700 0008                396          BEQ     CONT3
+00002440  6000 FD2A                397          BRA     ERR1
+00002444                           398  
+00002444  4284                     399          CLR.L   D4
+00002446  181A                     400  CONT3   MOVE.B  (A2)+,D4
+00002448  0C12 0000                401          CMPI.B  #NULL,(A2)
+0000244C  6700 0010                402          BEQ     CHG3
+00002450  0C12 0020                403          CMPI.B  #SPACE,(A2)
+00002454  6700 0008                404          BEQ     CHG3
+00002458  E19C                     405          ROL.L   #8,D4
+0000245A  B7CA                     406          CMPA.L  A2,A3
+0000245C  6CE8                     407          BGE     CONT3
+0000245E                           408          
+0000245E  4280                     409  CHG3    CLR.L   D0
+00002460  4281                     410          CLR.L   D1
+00002462  4282                     411          CLR.L   D2
+00002464  13FC 0000 00001410       412          MOVE.B  #$00,(HEXNUMBER)
+0000246C  13FC 0000 00001411       413          MOVE.B  #$00,(HEXNUMBER+1)
+00002474  13FC 0000 00001412       414          MOVE.B  #$00,(HEXNUMBER+2)
+0000247C  2204                     415          MOVE.L  D4,D1
+0000247E  33C4 0000140E            416          MOVE.W  D4,(HIN)
+00002484  303C 0003                417          MOVE.W  #3,D0 
+00002488  E199                     418  LOOP3   ROL.L   #8,D1
+0000248A  6100 FE6C                419          BSR     ASCIITOHEX
+0000248E  51C8 FFF8                420          DBF     D0,LOOP3
+00002492  2C02                     421          MOVE.L D2,D6
+00002494                           422  
+00002494  43F9 00001410            423          LEA     HEXNUMBER,A1    
+0000249A  6100 0014                424          BSR     DECIMAL
+0000249E  4281                     425          CLR.L   D1
+000024A0  43F9 00001410            426          LEA     HEXNUMBER,A1
+000024A6  103C 0012                427          MOVE.B  #18,D0
+000024AA  4E4F                     428          TRAP    #15
+000024AC  6000 FB52                429          BRA   BEGIN
+000024B0                           430  
+000024B0                           431  
+000024B0  4280                     432  DECIMAL CLR.L   D0                              ;CLEAR D0, D1, D2
+000024B2  4281                     433          CLR.L   D1                               
+000024B4  4282                     434          CLR.L   D2
+000024B6                           435          
+000024B6  49F9 00001410            436          LEA     HEXNUMBER,A4                    ;MOVE STARING ADDRESS OF NUM A4
+000024BC  1006                     437          MOVE.B  D6,D0                           ;MOVE D6 TO D0
+000024BE  1206                     438          MOVE.B  D6,D1                           ;MOVE D6 TO D1
+000024C0                           439          
+000024C0  80FC 0064                440          DIVU.W  #100,D0                         ;DIVIDE D0 BY 100 AND STORE IN D0
+000024C4  18C0                     441          MOVE.B  D0,(A4)+                        ;MOVE D0 TO (A4) AND INCERMENT
+000024C6                           442                                                  
+000024C6  C1FC 0064                443          MULS.W  #100,D0                         ;TIMES D0 BY 100 AND STORE IN D0
+000024CA  9240                     444          SUB.W   D0,D1                           ;SUBTRACT D1 BY D0
+000024CC  1401                     445          MOVE.B  D1,D2                           ;MOVE D1 TO D2
+000024CE  82FC 000A                446          DIVU.W  #10,D1                          ;DIVIDE D1 BY 10
+000024D2  18C1                     447          MOVE.B  D1,(A4)+                        ;MOVE D1 TO (A4) AND INCERMENT
+000024D4                           448                                                  
+000024D4  C3FC 000A                449          MULS.W  #10,D1                          ;TIMES D1 BY TEN
+000024D8  9441                     450          SUB.W   D1,D2                           ;SUBTRACT D2 BY D1
+000024DA  18C2                     451          MOVE.B  D2,(A4)+                        ;MOVE D2 IN (A4) AND INCERMENT
+000024DC                           452                                                  
+000024DC  49F9 00001410            453  DEC2ASC LEA     HEXNUMBER,A4                            ;MOVE THE ADDRESS OF NUM TO A1
+000024E2  061C 0030                454          ADDI.B  #$30,(A4)+                      ;ADD $30 TO (A4) AND INCERMENT
+000024E6  061C 0030                455          ADDI.B  #$30,(A4)+                      ;ADD $30 TO (A4) AND INCERMENT
+000024EA  061C 0030                456          ADDI.B  #$30,(A4)+
+000024EE                           457  
+000024EE  4E75                     458          RTS     
+000024F0                           459  *************BLOCK MOVE SOUBROUTINE ******************************
+000024F0  6100 FDB8                460  MOVE    BSR     GETADDRESS
+000024F4  2840                     461          MOVE.L  D0,A4
+000024F6  6100 FDB2                462          BSR     GETADDRESS
+000024FA  2A40                     463          MOVE.L  D0,A5
+000024FC  6100 FDAC                464          BSR     GETADDRESS
+00002500  2C40                     465          MOVE.L  D0,A6
+00002502                           466  
+00002502  200C                     467          MOVE.L  A4,D0
+00002504  220D                     468          MOVE.L  A5,D1
+00002506  1C94                     469           MOVE.B  (A4),(A6)
+00002508  BACC                     470          CMPA   A4,A5
+0000250A  6700 0012                471          BEQ    BACK1
+0000250E  528C                     472  BACK    ADD.L #$1,A4
+00002510  528E                     473          ADD.L #$1,A6 
+00002512  1C94                     474          MOVE.B (A4),(A6)
+00002514  BACC                     475          CMPA    A4,A5
+00002516  6700 0006                476          BEQ      BACK1
+0000251A  4EF8 250E                477          JMP     BACK
+0000251E                           478          
+0000251E  6000 FAE0                479  BACK1   BRA     BEGIN
+00002522                           480          
+00002522                           481  ******** BLOCKFILL SUBROUTINE ****************************
+00002522  6100 FD86                482  BFIL    BSR     GETADDRESS
+00002526  2040                     483          MOVE.L  D0,A0
+00002528  3600                     484          MOVE.W  D0,D3
+0000252A  6100 0100                485          BSR     ADDRESSCOMPARE
+0000252E                           486             
+0000252E  6100 FD7A                487          BSR     GETADDRESS
+00002532  2240                     488          MOVE.L  D0,A1
+00002534  3049                     489          MOVE.W  A1,A0
+00002536  6100 00F4                490          BSR     ADDRESSCOMPARE
+0000253A  3043                     491          MOVE.W  D3,A0 
+0000253C                           492  
+0000253C  4284                     493          CLR.L   D4
+0000253E  0C1A 0020                494          CMPI.B  #$20,(A2)+
+00002542  181A                     495  CONT6   MOVE.B  (A2)+,D4
+00002544  0C12 0000                496          CMPI.B  #$00,(A2)
+00002548  6700 0018                497          BEQ     CHG5
+0000254C  0C12 0020                498          CMPI.B  #$20,(A2)
+00002550  6700 0010                499          BEQ     CHG5
+00002554  0C12 003B                500          CMPI.B  #$3B,(A2)
+00002558  6700 0008                501          BEQ     CHG5    
+0000255C  E19C                     502          ROL.L   #8,D4
+0000255E  B7CA                     503          CMPA.L  A2,A3
+00002560  6CE0                     504          BGE     CONT6
+00002562                           505  
+00002562  4280                     506  CHG5    CLR.L   D0
+00002564  4281                     507          CLR.L   D1
+00002566  4282                     508          CLR.L   D2
+00002568  2204                     509          MOVE.L  D4,D1
+0000256A  303C 0003                510          MOVE.W  #3,D0
+0000256E  E199                     511  LOOP9   ROL.L   #8,D1
+00002570  6100 FD86                512          BSR     ASCIITOHEX
+00002574  51C8 FFF8                513          DBF     D0,LOOP9
+00002578  2002                     514          MOVE.L  D2,D0
+0000257A                           515  
+0000257A  30C0                     516  BFLOOP  MOVE.W  D0,(A0)+
+0000257C  B3C8                     517          CMPA.L  A0,A1
+0000257E  6CFA                     518          BGE     BFLOOP
+00002580  6000 FA7E                519          BRA     BEGIN
+00002584                           520          
+00002584                           521          
+00002584                           522          
+00002584                           523  ********* SORTING SUBROUTINE****************************
+00002584  6100 FD24                524  SORTNUMBER BSR  GETADDRESS
+00002588  2040                     525          MOVEA.L D0,A0
+0000258A  6100 FD1E                526          BSR     GETADDRESS
+0000258E  2240                     527          MOVEA.L D0,A1
+00002590  2008                     528          MOVE.L  A0,D0
+00002592  2209                     529          MOVE.L  A1,D1
+00002594  0C1A 0020                530          CMPI.B  #$20,(A2)+
+00002598  6600 0012                531          BNE     DSEND
+0000259C  0C1A 003B                532          CMPI.B  #$3B,(A2)+
+000025A0  6600 000A                533          BNE     DSEND
+000025A4  0C1A 0041                534          CMPI.B  #$41,(A2)+
+000025A8  6700 0042                535          BEQ     ASSEND
+000025AC                           536  
+000025AC  9280                     537  DSEND   SUB.L   D0,D1
+000025AE  82FC 0002                538          DIVU    #2,D1
+000025B2  2001                     539          MOVE.L  D1,D0
+000025B4  5880                     540          ADD.L   #4,D0
+000025B6  5381                     541          SUB.L   #1,D1
+000025B8  2801                     542          MOVE.L  D1,D4
+000025BA  2849                     543          MOVEA.L A1,A4
+000025BC  2A49                     544          MOVEA.L A1,A5
+000025BE                           545          
+000025BE  2C49                     546          MOVE.L  A1,A6
+000025C0  6000 000A                547          BRA     CAMP
+000025C4  2204                     548  SONEXT  MOVE.L  D4,D1   
+000025C6  2C4D                     549          MOVEA.L A5,A6
+000025C8  224D                     550          MOVEA.L A5,A1
+000025CA  558E                     551          SUBA.L  #2,A6
+000025CC                           552  
+000025CC  3411                     553  CAMP    MOVE.W  (A1),D2
+000025CE  3616                     554          MOVE.W  (A6),D3
+000025D0  B642                     555          CMP.W   D2,D3
+000025D2  6F00 0012                556          BLE     SWAP
+000025D6  558E                     557          SUBA.L  #2,A6
+000025D8  5589                     558          SUBA.L  #2,A1
+000025DA                           559          
+000025DA  51C9 FFF0                560  MAYBE   DBF     D1,CAMP
+000025DE                           561  
+000025DE                           562          
+000025DE  51C8 FFE4                563          DBF     D0,SONEXT
+000025E2                           564          
+000025E2  6000 FA1C                565          BRA     BEGIN
+000025E6                           566                  
+000025E6  3283                     567  SWAP    MOVE    D3,(A1)
+000025E8  3C82                     568          MOVE    D2,(A6)
+000025EA  60EE                     569          BRA     MAYBE
+000025EC                           570          
+000025EC  9280                     571  ASSEND  SUB.L   D0,D1
+000025EE  82FC 0002                572          DIVU    #2,D1
+000025F2  2001                     573          MOVE.L  D1,D0
+000025F4  5880                     574          ADD.L   #4,D0
+000025F6  5381                     575          SUB.L   #1,D1
+000025F8  2801                     576          MOVE.L  D1,D4
+000025FA  2849                     577          MOVEA.L A1,A4
+000025FC  2A49                     578          MOVEA.L A1,A5
+000025FE                           579          
+000025FE  2C49                     580          MOVE.L  A1,A6
+00002600  6000 000A                581          BRA     CAMPA
+00002604  2204                     582  SANEXT  MOVE.L  D4,D1   
+00002606  2C4D                     583          MOVEA.L A5,A6
+00002608  224D                     584          MOVEA.L A5,A1
+0000260A  558E                     585          SUBA.L  #2,A6
+0000260C                           586  
+0000260C  3411                     587  CAMPA   MOVE.W  (A1),D2
+0000260E  3616                     588          MOVE.W  (A6),D3
+00002610  B642                     589          CMP.W   D2,D3
+00002612  6C00 0012                590          BGE     SWAPA
+00002616  558E                     591          SUBA.L  #2,A6
+00002618  5589                     592          SUBA.L  #2,A1
+0000261A                           593          
+0000261A  51C9 FFF0                594  MAYBEA  DBF     D1,CAMPA
+0000261E                           595  
+0000261E                           596          
+0000261E  51C8 FFE4                597          DBF     D0,SANEXT
+00002622                           598          
+00002622  6000 F9DC                599          BRA     BEGIN
+00002626                           600          
+00002626  3283                     601  SWAPA   MOVE    D3,(A1)
+00002628  3C82                     602          MOVE    D2,(A6)
+0000262A  60EE                     603          BRA     MAYBEA
+0000262C                           604  
+0000262C                           605  ********* ADDRESS COMAPRE SUBROUTINE ************
+0000262C  4286                     606  ADDRESSCOMPARE CLR.L D6
+0000262E  3C3C 3000                607                 MOVE.W #$3000,D6
+00002632  B0C6                     608                 CMPA   D6,A0
+00002634  6F00 0004                609                 BLE    BFILERR
+00002638  4E75                     610                 RTS
+0000263A  43F9 0000106B            611  BFILERR        LEA   BFERR,A1
+00002640  103C 000E                612                 MOVE.B #14,D0
+00002644  4E4F                     613                 TRAP  #15
+00002646  6000 F9B8                614                 BRA   BEGIN  
+0000264A                           615                 
+0000264A                           616                 
+0000264A                           617  
+0000264A                           618  ************MEMORY CHANGE SUBROUTINE***********************
+0000264A                           619  
+0000264A  6100 FC5E                620  MEMORYCHG BSR GETADDRESS
+0000264E  2040                     621          MOVEA.L D0,A0
+00002650                           622          
+00002650  0C1A 003B                623          CMPI.B  #$3B,(A2)+
+00002654  0C12 0057                624          CMPI.B  #$57,(A2)
+00002658  6700 00AA                625          BEQ     WORD
+0000265C  0C12 004C                626          CMPI.B  #$4C,(A2)
+00002660  6700 013E                627          BEQ     LONG
+00002664                           628  
+00002664                           629                          
+00002664  23FC 00000000 00001438   630  REPB    MOVE.L  #$0,(BMCIN)
+0000266E  23FC 00000000 0000143C   631          MOVE.L  #$0,(BMCIN1)
+00002678  2008                     632          MOVE.L  A0,D0
+0000267A  2C08                     633          MOVE.L  A0,D6
+0000267C  47F9 0000141C            634          LEA     BAMC,A3
+00002682  6100 FD8C                635          BSR     PNT4HX
+00002686  1018                     636          MOVE.B  (A0)+,D0
+00002688                           637          
+00002688  47F9 00001421            638          LEA     BBMC,A3
+0000268E  6100 FD88                639          BSR     PNT2HX
+00002692                           640  
+00002692  43F9 0000141C            641          LEA     BAMC,A1 
+00002698  103C 0012                642          MOVE.B  #18,D0
+0000269C  4E4F                     643          TRAP    #15
+0000269E                           644          
+0000269E  43F9 00001441            645          LEA     BSPACE,A1
+000026A4  103C 000E                646          MOVE.B  #14,D0
+000026A8  4E4F                     647          TRAP    #15
+000026AA                           648  
+000026AA  43F9 00001421            649          LEA     BBMC,A1
+000026B0  103C 0012                650          MOVE.B  #18,D0
+000026B4  4E4F                     651          TRAP    #15
+000026B6                           652          
+000026B6                           653  
+000026B6  43F9 00001433            654          LEA     BFOR,A1
+000026BC  103C 000E                655          MOVE.B  #14,D0
+000026C0  4E4F                     656          TRAP    #15
+000026C2                           657          
+000026C2                           658          
+000026C2  43F9 00001438            659          LEA     BMCIN,A1
+000026C8  103C 0002                660          MOVE.B  #2,D0
+000026CC  4E4F                     661          TRAP    #15
+000026CE                           662           
+000026CE                           663     
+000026CE  0CB9 2E000000 00001438   664          CMPI.L  #$2E000000,(BMCIN)
+000026D8  6600 0006                665          BNE     CHGB
+000026DC  6000 F922                666          BRA     BEGIN
+000026E0                           667          
+000026E0  4280                     668  CHGB    CLR.L   D0
+000026E2  4281                     669          CLR.L   D1
+000026E4  4282                     670          CLR.L   D2
+000026E6  3239 00001438            671          MOVE.W  (BMCIN),D1
+000026EC  303C 0003                672          MOVE.W  #3,D0
+000026F0  E199                     673  LOOP5   ROL.L   #8,D1
+000026F2  6100 FC04                674          BSR     ASCIITOHEX
+000026F6  51C8 FFF8                675          DBF     D0,LOOP5
+000026FA  2002                     676          MOVE.L  D2,D0
+000026FC  2246                     677          MOVEA.L D6,A1
+000026FE  1280                     678          MOVE.B  D0,(A1)
+00002700  6000 FF62                679          BRA     REPB
+00002704                           680  
+00002704  23F8 0000 00001438       681  WORD    MOVE.L  $0,(BMCIN)
+0000270C  23F8 0000 0000143C       682          MOVE.L  $0,(BMCIN1)
+00002714  2008                     683          MOVE.L  A0,D0
+00002716  2C08                     684          MOVE.L  A0,D6
+00002718  47F9 0000141C            685          LEA     BAMC,A3
+0000271E  6100 FCF0                686          BSR     PNT4HX
+00002722  3018                     687          MOVE.W  (A0)+,D0
+00002724                           688          
+00002724  47F9 00001424            689          LEA     BWMC,A3
+0000272A  6100 FCE4                690          BSR     PNT4HX
+0000272E                           691  
+0000272E  43F9 0000141C            692          LEA     BAMC,A1
+00002734  103C 0012                693          MOVE.B  #18,D0
+00002738  4E4F                     694          TRAP    #15
+0000273A                           695          
+0000273A  43F9 00001441            696          LEA     BSPACE,A1
+00002740  103C 000E                697          MOVE.B  #14,D0
+00002744  4E4F                     698          TRAP    #15
+00002746                           699  
+00002746  43F9 00001424            700          LEA     BWMC,A1
+0000274C  103C 0012                701          MOVE.B  #18,D0
+00002750  4E4F                     702          TRAP    #15
+00002752                           703          
+00002752                           704  
+00002752  43F9 00001433            705          LEA     BFOR,A1
+00002758  103C 000E                706          MOVE.B  #14,D0
+0000275C  4E4F                     707          TRAP    #15
+0000275E                           708          
+0000275E  43F9 00001438            709          LEA     BMCIN,A1
+00002764  103C 0002                710          MOVE.B  #2,D0
+00002768  4E4F                     711          TRAP    #15
+0000276A                           712  
+0000276A  0CB9 2E000000 00001438   713          CMPI.L  #$2E000000,(BMCIN)
+00002774  6600 0006                714          BNE     CHGW
+00002778  6000 F886                715          BRA     BEGIN
+0000277C                           716          
+0000277C  4280                     717  CHGW    CLR.L   D0
+0000277E  4281                     718          CLR.L   D1
+00002780  4282                     719          CLR.L   D2
+00002782  2239 00001438            720          MOVE.L  (BMCIN),D1
+00002788  303C 0003                721          MOVE.W  #3,D0
+0000278C  E199                     722  LOOP6   ROL.L   #8,D1
+0000278E  6100 FB68                723          BSR     ASCIITOHEX
+00002792  51C8 FFF8                724          DBF     D0,LOOP6
+00002796  2002                     725          MOVE.L  D2,D0
+00002798  2246                     726          MOVEA.L D6,A1
+0000279A  3280                     727          MOVE.W  D0,(A1)
+0000279C  6000 FF66                728          BRA     WORD
+000027A0                           729  
+000027A0                           730  
+000027A0                           731  
+000027A0                           732  
+000027A0  23F8 0000 00001438       733  LONG    MOVE.L  $0,(BMCIN)
+000027A8  23F8 0000 0000143C       734          MOVE.L  $0,(BMCIN1)
+000027B0  2008                     735          MOVE.L  A0,D0
+000027B2  2C08                     736          MOVE.L  A0,D6
+000027B4  47F9 0000141C            737          LEA     BAMC,A3
+000027BA  6100 FC54                738          BSR     PNT4HX
+000027BE  2018                     739          MOVE.L  (A0)+,D0
+000027C0                           740          
+000027C0  47F9 0000142A            741          LEA     BLMC,A3
+000027C6  6100 FC3A                742          BSR     PNT8HX
+000027CA                           743  
+000027CA  43F9 0000141C            744          LEA     BAMC,A1
+000027D0  103C 0012                745          MOVE.B  #18,D0
+000027D4  4E4F                     746          TRAP    #15
+000027D6                           747          
+000027D6  43F9 00001441            748          LEA     BSPACE,A1
+000027DC  103C 000E                749          MOVE.B  #14,D0
+000027E0  4E4F                     750          TRAP    #15
+000027E2                           751  
+000027E2  43F9 0000142A            752          LEA     BLMC,A1
+000027E8  103C 0012                753          MOVE.B  #18,D0
+000027EC  4E4F                     754          TRAP    #15
+000027EE                           755          
+000027EE                           756  
+000027EE  43F9 00001433            757          LEA     BFOR,A1
+000027F4  103C 000E                758          MOVE.B  #14,D0
+000027F8  4E4F                     759          TRAP    #15
+000027FA                           760          
+000027FA                           761          
+000027FA  43F9 00001438            762          LEA     BMCIN,A1
+00002800  103C 0002                763          MOVE.B  #2,D0
+00002804  4E4F                     764          TRAP    #15
+00002806                           765  
+00002806  0CB9 2E000000 00001438   766          CMPI.L  #$2E000000,(BMCIN)
+00002810  6600 0006                767          BNE     CHGL
+00002814  6000 F7EA                768          BRA     BEGIN
+00002818                           769          
+00002818  4285                     770  CHGL    CLR.L   D5
+0000281A  4280                     771          CLR.L   D0
+0000281C  4281                     772          CLR.L   D1
+0000281E  4282                     773          CLR.L   D2
+00002820  2239 00001438            774          MOVE.L  (BMCIN),D1
+00002826  303C 0003                775          MOVE.W  #3,D0
+0000282A  E199                     776  LOOP7   ROL.L   #8,D1
+0000282C  6100 FACA                777          BSR     ASCIITOHEX
+00002830  51C8 FFF8                778          DBF     D0,LOOP7
+00002834  2002                     779          MOVE.L  D2,D0
+00002836  3A00                     780          MOVE.W  D0,D5
+00002838  4845                     781          SWAP.W  D5
+0000283A                           782  
+0000283A  4280                     783          CLR.L   D0
+0000283C  4281                     784          CLR.L   D1
+0000283E  4282                     785          CLR.L   D2
+00002840  2239 00001438            786          MOVE.L  (BMCIN),D1
+00002846  303C 0003                787          MOVE.W  #3,D0
+0000284A  E199                     788  LOOP8   ROL.L   #8,D1
+0000284C  6100 FAAA                789          BSR     ASCIITOHEX
+00002850  51C8 FFF8                790          DBF     D0,LOOP8
+00002854  2002                     791          MOVE.L  D2,D0
+00002856  3A00                     792          MOVE.W  D0,D5
+00002858  2246                     793          MOVEA.L D6,A1
+0000285A  2285                     794          MOVE.L  D5,(A1)
+0000285C  6000 FF42                795          BRA     LONG               
+00002860                           796                 
+00002860                           797  *
+00002860                           798                 
+00002860                           799  ********* LOOKUP TABLE **************
+00002860                           800  
+00001000                           801                  ORG $1000
+00001000                           802           
+00001000  =00003000                803  STACK           EQU $3000
+00001000  =00003050                804  STACKA0         EQU $3050
+00001000  =0000000D                805  CR              EQU $0D
+00001000  =00000020                806  SPACESIGN       EQU $20
+00001000  =0000000A                807  LF              EQU $0A
+00001000  =00000020                808  SPACE           EQU $20 
+00001000  =00000024                809  DOLLARSIGN      EQU $24
+00001000                           810  
+00001000                           811  ************ COMMAND TABLE **********
+00001000                           812  
+00001000  =48454C50                813  HELPUPPERCASE   EQU $48454C50
+00001000  =68656C70                814  helplowercase   EQU $68656C70
+00001000  =4D445359                815  MEMDISPLAY      EQU $4D445359
+00001000  =6D647379                816  mdisplylower    EQU $6D647379 
+00001000  =44454349                817  HEXDEC          EQU $44454349
+00001000  =64656369                818  hexdeclower     EQU $64656369 
+00001000  =51554954                819  QUITPROG        EQU $51554954
+00001000  =71756974                820  quitlowercase   EQU $71756974
+00001000  =474F544F                821  GOCMD           EQU $474F544F
+00001000  =676F746F                822  golower         EQU $676F746F 
+00001000  =4D4F5645                823  BMOVE           EQU $4D4F5645
+00001000  =6D6F7665                824  movelower       EQU $6D6F7665   
+00001000  =46494C4C                825  BFILL           EQU $46494C4C
+00001000  =66696C6C                826  bfilllower      EQU $66696C6C 
+00001000  =534F5254                827  SORT            EQU $534F5254
+00001000  =736F7274                828  sortlower       EQU $736F7274 
+00001000  =4D434847                829  MEMCHAGE        EQU $4D434847
+00001000  =6D636867                830  changelower     EQU $6D636867  
+00001000                           831  
+00001000  =00000030                832  AZERO           EQU $30
+00001000  =00000031                833  AONE            EQU $31
+00001000  =00000032                834  ATWO            EQU $32
+00001000  =00000033                835  ATHREE          EQU $33
+00001000  =00000034                836  AFOUR           EQU $34
+00001000  =00000035                837  AFIVE           EQU $35
+00001000  =00000036                838  ASIX            EQU $36
+00001000  =00000037                839  ASEVEN          EQU $37
+00001000  =00000038                840  AEIGHT          EQU $38
+00001000  =00000039                841  ANINE           EQU $39
+00001000  =00000041                842  ATEN            EQU $41
+00001000  =00000042                843  AELEVEN         EQU $42
+00001000  =00000043                844  ATWELVE         EQU $43
+00001000  =00000044                845  ATHIRTEEN       EQU $44
+00001000  =00000045                846  AFOURTEEN       EQU $45
+00001000  =00000046                847  AFIFTEEN        EQU $46
+00001000  =0000000C                848  ADDRESSERR      EQU $0C
+00001000  =00000010                849  ILLIGLEINSTERR  EQU $10
+00001000  =00000008                850  BSERR           EQU $08
+00001000  =00000014                851  DIVIDEZEROERR   EQU $14
+00001000  =00000020                852  PRIVIOERR       EQU $20
+00001000  =00000028                853  LINEAERR        EQU $28
+00001000  =0000002C                854  LINEFERR        EQU $2C
+00001000  =00000000                855  NULL            EQU $00 
+00001000                           856             
+00001000                           857  
+00001000= 45 43 45 20 34 34 ...    858  CMDPROMPT       DC.B     'ECE 441 Project>',0  
+00001011= 41 48 41 21 20 57 ...    859  ERROR1          DC.B     'AHA! Wrong Command',CR,LF,0 
+00001026= 43 6F 6D 6D 61 6E ...    860  ERROR2          DC.B     'Command BEGIN with space',CR,LF,0
+00001041= 48 6D 6D 21 20 59 ...    861  ERROR3          DC.B     'Hmm! You reached maximum command lenght',CR,LF,0
+0000106B= 59 6F 75 20 61 72 ...    862  BFERR           DC.B     'You are accessing program area',CR,LF,0
+0000108C                           863  INPUT           DS.B    50
+000010BE= 00                       864  INPUTEND        DC.B    $00
+000010BF                           865  CMDBUF          DS.B    10
+000010C9                           866  
+000010C9= 0D 0A 00                 867  CLF             DC.B     CR,LF,0
+000010CC= 41 4C 4C 20 43 4F ...    868  NONECASE        DC.B    'ALL COMMANDS ARE NOT CASE SENSITIVE',CR,LF,0
+000010F2= 48 45 4C 50 20 4D ...    869  CMDLIST1        DC.B    'HELP MDSY SORT MOVE ',CR,LF,0
+00001109= 46 49 4C 4C 20 20 ...    870  CMDLIST2        DC.B    'FILL  MCHG  DECI QUIT  GOTO',CR,LF,0
+00001127= 48 45 4C 50 2D 44 ...    871  HELPALL         DC.B    'HELP-DISPLAYS ALL COMMANDS',CR,LF,0
+00001144= 4D 44 53 59 20 24 ...    872  MDISPLAY        DC.B    'MDSY $<BEGIN ADD> $<END ADD> DISPLAY MEM CONTENT',CR,LF,0
+00001177= 44 45 43 49 20 24 ...    873  HEXTODEC        DC.B    'DECI $<HEX NO> CONVERT HEX TO DEC (0-255)',CR,LF,0
+000011A3= 53 4F 52 54 4E 55 ...    874  SORT1           DC.B    'SORTNUMBER $<BEGIN ADD> $<END ADD> ;X  -here X = A OR D',CR,LF,0
+000011DD= 53 4F 52 54 53 20 ...    875  SORT2           DC.B    'SORTS WORDS IF X=A IN ASCENDING ORDER AND DESCENDING BY DEFAULT',CR,LF,0
+0000121F= 4D 43 48 47 20 3C ...    876  CHANGE          DC.B    'MCHG <BEGIN ADD>;X - here X = W or L Or NOTHING',CR,LF,0
+00001251= 4D 45 4D 45 4F 52 ...    877  CHANGE1         DC.B    'MEMEORY CHANGE, IF X=W CHANGE BY WORD IF X=L CHANGE BY LONGWORD',CR,LF,0
+00001293= 43 48 41 4E 47 45 ...    878  CHANGE2         DC.B    'CHANGE BY BYTE DEFAULT',CR,LF,0
+000012AC= 46 49 4C 4C 20 24 ...    879  BLOCKFILL       DC.B    'FILL $<BEGIN ADD> $<END ADD> $<WORD> FILL BLOCK WITH WORD',CR,LF,0
+000012E8= 51 55 49 54 2D 20 ...    880  QUIT            DC.B    'QUIT- EXIT THE PROGRAM ',CR,LF,0
+00001302= 47 4F 54 4F 20 24 ...    881  GOCOMMAND       DC.B    'GOTO $<BEGIN PROG ADD> EXECUTION OF PROGRAMS',CR,LF,0
+00001331= 4D 4F 56 45 20 24 ...    882  BLOCKMOVE       DC.B    'MOVE $<STA ADD> $<END ADD> $<MOVE INI ADD>',CR,LF,0
+0000135E                           883  ABUF            DS.W    2
+00001362= 00                       884  ABUFE           DC.B    $00
+00001363                           885  
+00001363= 41 44 44 52 45 53 ...    886  ADDERR          DC.B    'ADDRESS ERROR EXCEPTION',0
+0000137B= 42 55 53 20 45 52 ...    887  BUSERR          DC.B    'BUS ERROR EXCEPTION',0
+0000138F= 49 4C 4C 45 47 41 ...    888  ILLERR          DC.B    'ILLEGAL INSTRUCTION EXCEPTION',0
+000013AD= 50 52 49 56 49 4C ...    889  PRIVERR         DC.B    'PRIVILEGE VIOLATION ECEPTION',0
+000013CA= 44 49 56 49 44 45 ...    890  DZEROERR        DC.B    'DIVIDE BY ZERO EXCEPTION',0
+000013E3= 4C 49 4E 45 20 41 ...    891  LAERR           DC.B    'LINE A EMULATOR',0
+000013F3= 4C 49 4E 45 20 46 ...    892  LFERR           DC.B    'LINE F EMULATOR',0
+00001403                           893  
+00001403                           894  
+00001403                           895  *******************************
+00001403                           896  *MDIS - Memory Display
+00001403                           897  *******************************
+00001403                           898  
+00001404                           899  BMDIS   DS.W    2
+00001408= 7C                       900  BEMDIS  DC.B    '|'
+0000140A= 0001                     901  BMDA    DC.W    1
+0000140C= 00                       902  BEMDA   DC.B    $00
+0000140D                           903  
+0000140D                           904  
+0000140D                           905  
+0000140D                           906  
+0000140D                           907  ******************************
+0000140D                           908  *HDEC - Hex to Decimal
+0000140D                           909  ******************************
+0000140E                           910  HIN             DS.W    1 
+00001410                           911  HEXNUMBER       DS.B    3 
+00001413= 00                       912  HEXNUMBERE      DC.B    $00
+00001414                           913  HHEX            DS.W    4
+0000141C                           914  
+0000141C                           915  
+0000141C                           916  
+0000141C                           917  *
+0000141C                           918  *MCHG
+0000141C                           919  *
+0000141C                           920  BAMC    DS.B    4
+00001420= 00                       921  BAMCE   DC.B    $00
+00001421                           922  
+00001421                           923  BBMC    DS.B    2       
+00001423= 00                       924  BBMCE   DC.B    $0
+00001424                           925  
+00001424                           926  BWMC    DS.W    2
+00001428= 00                       927  BWMCE   DC.B    $00
+00001429                           928  
+0000142A                           929  BLMC    DS.L    2
+00001432= 00                       930  BLMCE   DC.B    $00
+00001433                           931  
+00001433= 20 3F 20                 932  BFOR    DC.B    ' ? '
+00001436= 00                       933  BFORE   DC.B    $00
+00001437                           934  
+00001438                           935  BMCIN   DS.L    1
+0000143C                           936  BMCIN1  DS.L    1
+00001440= 00                       937  BMCINE  DC.B    $00
+00001441= 20                       938  BSPACE  DC.B    ' '
+00001442= 00                       939  BSPACEE DC.B    $00
+00001443                           940  
+00001443                           941          
+00001443                           942  
+00001443                           943          END     BEGIN           ; last line of source
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ABUF                135E
+ABUFE               1362
+ADDERR              1363
+ADDRESSCOMPARE      262C
+ADDRESSERR          C
+AEIGHT              38
+AELEVEN             42
+AFIFTEEN            46
+AFIVE               35
+AFOUR               34
+AFOURTEEN           45
+ALLCMD              20B4
+ANINE               39
+AONE                31
+ASCIITOHEX          22F8
+ASEVEN              37
+ASIX                36
+ASSEND              25EC
+ATEN                41
+ATHIRTEEN           44
+ATHREE              33
+ATWELVE             43
+ATWO                32
+AZERO               30
+BACK                250E
+BACK1               251E
+BAMC                141C
+BAMCE               1420
+BBMC                1421
+BBMCE               1423
+BEGIN               2000
+BEMDA               140C
+BEMDIS              1408
+BFERR               106B
+BFIL                2522
+BFILERR             263A
+BFILL               46494C4C
+BFILLLOWER          66696C6C
+BFLOOP              257A
+BFOR                1433
+BFORE               1436
+BLMC                142A
+BLMCE               1432
+BLOCKFILL           12AC
+BLOCKMOVE           1331
+BMCIN               1438
+BMCIN1              143C
+BMCINE              1440
+BMDA                140A
+BMDIS               1404
+BMOVE               4D4F5645
+BSERR               8
+BSPACE              1441
+BSPACEE             1442
+BUSERR              137B
+BWMC                1424
+BWMCE               1428
+CAMP                25CC
+CAMPA               260C
+CHANGE              121F
+CHANGE1             1251
+CHANGE2             1293
+CHANGELOWER         6D636867
+CHG3                245E
+CHG4                22DE
+CHG5                2562
+CHGB                26E0
+CHGL                2818
+CHGW                277C
+CLF                 10C9
+CMDBUF              10BF
+CMDLIST1            10F2
+CMDLIST2            1109
+CMDPROMPT           1000
+CMLNT               2076
+CONT3               2446
+CONT4               22BE
+CONT6               2542
+CR                  D
+DEC2ASC             24DC
+DECIMAL             24B0
+DIS                 225E
+DIVIDEZEROERR       14
+DOLLARSIGN          24
+DSEND               25AC
+DZEROERR            13CA
+ELE                 23D0
+ERR                 2080
+ERR1                216C
+ERR2                2056
+ERR3                20A4
+ERROR1              1011
+ERROR2              1026
+ERROR3              1041
+EXIT                2240
+FIVE                23A4
+FIVT                23F8
+FORT                23EE
+FOUR                239E
+GETADDRESS          22AA
+GOCMD               474F544F
+GOCOMMAND           1302
+GOLOWER             676F746F
+GOTO                229E
+HDEC                2434
+HELP                217C
+HELPALL             1127
+HELPLOWERCASE       68656C70
+HELPUPPERCASE       48454C50
+HEXDEC              44454349
+HEXDECLOWER         64656369
+HEXNUMBER           1410
+HEXNUMBERE          1413
+HEXTODEC            1177
+HHEX                1414
+HIN                 140E
+ILLERR              138F
+ILLIGLEINSTERR      10
+IN                  2064
+INPUT               108C
+INPUTEND            10BE
+LAERR               13E3
+LF                  A
+LFERR               13F3
+LINEAERR            28
+LINEFERR            2C
+LONG                27A0
+LOOP3               2488
+LOOP4               22EA
+LOOP5               26F0
+LOOP6               278C
+LOOP7               282A
+LOOP8               284A
+LOOP9               256E
+MAYBE               25DA
+MAYBEA              261A
+MDISPLAY            1144
+MDISPLYLOWER        6D647379
+MDSY                2246
+MEMCHAGE            4D434847
+MEMDISPLAY          4D445359
+MEMORYCHG           264A
+MOVE                24F0
+MOVELOWER           6D6F7665
+NINE                23BC
+NONECASE            10CC
+NOTZERO             2380
+NULL                0
+OCT                 23B6
+ONE                 238C
+PLINE               208C
+PNT2HX              2418
+PNT4HX              2410
+PNT6HX              240A
+PNT8HX              2402
+PRIVERR             13AD
+PRIVIOERR           20
+PUTHEX              2420
+QUIT                12E8
+QUITLOWERCASE       71756974
+QUITPROG            51554954
+REPB                2664
+SANEXT              2604
+SAVHEX              2430
+SEV                 23B0
+SIX                 23AA
+SONEXT              25C4
+SORT                534F5254
+SORT1               11A3
+SORT2               11DD
+SORTLOWER           736F7274
+SORTNUMBER          2584
+SPACE               20
+SPACESIGN           20
+STACK               3000
+STACKA0             3050
+SWAP                25E6
+SWAPA               2626
+TEN                 23C6
+TEW                 23DA
+THRE                2398
+THRT                23E4
+TWO                 2392
+WORD                2704
+ZERO                2382
